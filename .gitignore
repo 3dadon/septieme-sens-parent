@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+target/
+.angular/
+.gradle/
+.idea/
+.vscode/
+.env
+.env.*
+*.log
+coverage/
+.DS_Store
+Thumbs.db
