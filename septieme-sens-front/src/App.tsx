@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Brain,
-  Compass,
   Ear,
   Eye,
   Flower2,
   Hand,
-  Home,
   Sparkles,
   Utensils,
 } from "lucide-react";
 
 type Article = {
+  slug: string;
   title: string;
   category: string;
+  description: string;
   image: string;
   alt: string;
 };
@@ -43,64 +43,105 @@ const articleImages = [
   "/images/articles/the-sencha.jpg",
 ];
 
+const articleFilters = ["Tous les articles", "Nouveautés", "Intemporels"];
+
+function slugify(value: string) {
+  return value
+    .replace(/^l['’]/i, "")
+    .replace(/^(le|la|les)\s+/i, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function createArticle(
+  title: string,
+  category: string,
+  image: string,
+  alt: string,
+  description = "Une sensation brève, précise, comme un souvenir qui revient dans la lumière.",
+): Article {
+  return {
+    slug: slugify(title),
+    title,
+    category,
+    description,
+    image,
+    alt,
+  };
+}
+
 const goutArticles: Article[] = [
-  {
-    title: "L'artichaut poivrade",
-    category: "Nouveauté",
-    image: articleImages[0],
-    alt: "Artichaut poivrade dans une lumière chaude",
-  },
-  {
-    title: "Le zeste de Sicile",
-    category: "Intemporel",
-    image: articleImages[1],
-    alt: "Citron de Sicile suspendu à une branche",
-  },
-  {
-    title: "Huile d'olive, l'or liquide",
-    category: "Intemporel",
-    image: articleImages[2],
-    alt: "Huile d'olive dorée avec branches d'olivier",
-  },
-  {
-    title: "Épices du monde",
-    category: "Nouveauté",
-    image: articleImages[3],
-    alt: "Épices rouges sur une cuillère ancienne",
-  },
-  {
-    title: "La poire conférence",
-    category: "Intemporel",
-    image: articleImages[4],
-    alt: "Poires conférence posées dans une corbeille",
-  },
-  {
-    title: "Chocolat noir 72%",
-    category: "Nouveauté",
-    image: articleImages[5],
-    alt: "Morceaux de chocolat noir et poudre de cacao",
-  },
-  {
-    title: "Pain au levain",
-    category: "Intemporel",
-    image: articleImages[6],
-    alt: "Pain au levain ouvert sur un linge clair",
-  },
-  {
-    title: "Thé vert Sencha",
-    category: "Intemporel",
-    image: articleImages[7],
-    alt: "Thé vert fumant servi dans une théière",
-  },
+  createArticle(
+    "L'artichaut poivrade",
+    "Nouveauté",
+    articleImages[0],
+    "Artichaut poivrade dans une lumière chaude",
+    "Une amertume tendre, presque verte, qui ouvre l'appétit comme une promenade au marché.",
+  ),
+  createArticle(
+    "Le zeste de Sicile",
+    "Intemporel",
+    articleImages[1],
+    "Citron de Sicile suspendu à une branche",
+    "Un parfum solaire, une fraîcheur vibrante, un souvenir d'enfance qui revient sans prévenir.",
+  ),
+  createArticle(
+    "Huile d'olive, l'or liquide",
+    "Intemporel",
+    articleImages[2],
+    "Huile d'olive dorée avec branches d'olivier",
+    "Une matière dorée, lente et lumineuse, qui relie la table à la terre.",
+  ),
+  createArticle(
+    "Épices du monde",
+    "Nouveauté",
+    articleImages[3],
+    "Épices rouges sur une cuillère ancienne",
+    "Quelques poudres chaudes suffisent à déplacer une assiette vers un autre paysage.",
+  ),
+  createArticle(
+    "La poire conférence",
+    "Intemporel",
+    articleImages[4],
+    "Poires conférence posées dans une corbeille",
+    "Une douceur simple, juteuse, avec ce calme doré des fruits mûrs.",
+  ),
+  createArticle(
+    "Chocolat noir 72%",
+    "Nouveauté",
+    articleImages[5],
+    "Morceaux de chocolat noir et poudre de cacao",
+    "Une profondeur mate, légèrement amère, qui reste longtemps sur la langue.",
+  ),
+  createArticle(
+    "Pain au levain",
+    "Intemporel",
+    articleImages[6],
+    "Pain au levain ouvert sur un linge clair",
+    "Une croûte sonore, une mie vivante, la patience rendue visible.",
+  ),
+  createArticle(
+    "Thé vert Sencha",
+    "Intemporel",
+    articleImages[7],
+    "Thé vert fumant servi dans une théière",
+    "Une vapeur claire, végétale, presque silencieuse.",
+  ),
 ];
 
 function makeArticles(titles: string[]): Article[] {
-  return titles.map((title, index) => ({
-    title,
-    category: index % 3 === 0 ? "Nouveauté" : "Intemporel",
-    image: articleImages[index % articleImages.length],
-    alt: `${title}, composition éditoriale sensorielle`,
-  }));
+  return titles.map((title, index) =>
+    createArticle(
+      title,
+      index % 3 === 0 ? "Nouveauté" : "Intemporel",
+      articleImages[index % articleImages.length],
+      `${title}, composition éditoriale sensorielle`,
+    ),
+  );
 }
 
 const senses: Sense[] = [
@@ -159,7 +200,7 @@ const senses: Sense[] = [
     articles: makeArticles([
       "Figue chaude",
       "Linge au soleil",
-      "Encens clair",
+      "Mémoire des résines",
       "Basilic froissé",
       "La pluie sur la terre",
       "Bois blond",
@@ -222,8 +263,6 @@ const senses: Sense[] = [
   },
 ];
 
-const articleFilters = ["Tous les articles", "Nouveautés", "Intemporels"];
-
 function navigateTo(path: string) {
   window.history.pushState({}, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
@@ -239,7 +278,7 @@ function RouteLink({
 }: {
   href: string;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   ariaLabel?: string;
   ariaCurrent?: "page";
 }) {
@@ -533,7 +572,15 @@ function SecondaryNav() {
   );
 }
 
-function ArticleCard({ article, index }: { article: Article; index: number }) {
+function ArticleCard({
+  article,
+  index,
+  senseSlug,
+}: {
+  article: Article;
+  index: number;
+  senseSlug: string;
+}) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 26 }}
@@ -546,8 +593,8 @@ function ArticleCard({ article, index }: { article: Article; index: number }) {
       }}
       className="group overflow-hidden rounded-[0.42rem] border border-[#d9c9af]/80 bg-[#fffaf1]/54 shadow-[0_18px_70px_rgba(67,48,29,0.08)] transition duration-700 hover:-translate-y-1 hover:bg-[#fffaf1]/78 hover:shadow-[0_30px_95px_rgba(67,48,29,0.13)]"
     >
-      <a
-        href="#article"
+      <RouteLink
+        href={`/${senseSlug}/${article.slug}`}
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/35"
       >
         <div className="relative aspect-[1.2/1] overflow-hidden bg-sand/25 sm:aspect-[1.45/1] lg:aspect-[1.38/1]">
@@ -567,19 +614,30 @@ function ArticleCard({ article, index }: { article: Article; index: number }) {
             {article.category}
           </p>
         </div>
-      </a>
+      </RouteLink>
     </motion.article>
   );
 }
 
-function ArticlesGrid({ articles }: { articles: Article[] }) {
+function ArticlesGrid({
+  articles,
+  senseSlug,
+}: {
+  articles: Article[];
+  senseSlug: string;
+}) {
   return (
     <section
       id="articles"
       className="mx-auto grid max-w-[118rem] grid-cols-1 gap-5 px-5 pb-20 pt-5 sm:grid-cols-2 sm:px-10 sm:pb-24 md:gap-6 lg:grid-cols-4 lg:px-16 lg:pb-28"
     >
       {articles.map((article, index) => (
-        <ArticleCard key={article.title} article={article} index={index} />
+        <ArticleCard
+          key={article.slug}
+          article={article}
+          index={index}
+          senseSlug={senseSlug}
+        />
       ))}
     </section>
   );
@@ -591,7 +649,112 @@ function SensePage({ sense }: { sense: Sense }) {
       <FloatingNav activeSlug={sense.slug} />
       <SenseHero sense={sense} />
       <SecondaryNav />
-      <ArticlesGrid articles={sense.articles} />
+      <ArticlesGrid articles={sense.articles} senseSlug={sense.slug} />
+    </>
+  );
+}
+
+function ArticleDetailPage({
+  sense,
+  article,
+}: {
+  sense: Sense;
+  article: Article;
+}) {
+  const Icon = sense.icon;
+
+  return (
+    <>
+      <FloatingNav activeSlug={sense.slug} />
+      <section className="grid min-h-screen pt-24 lg:grid-cols-[0.92fr_1.08fr] lg:pt-0">
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          className="flex min-h-[52svh] flex-col justify-center px-6 py-12 sm:px-10 lg:min-h-screen lg:px-16 xl:px-24"
+        >
+          <RouteLink
+            href={`/${sense.slug}`}
+            className="mb-12 inline-flex h-12 w-fit items-center gap-3 rounded-full border border-gold/32 px-5 text-[0.62rem] uppercase tracking-[0.24em] text-[#6d5430] transition duration-500 hover:border-ink/20 hover:bg-ink hover:text-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/35"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.3} />
+            Retour aux articles
+          </RouteLink>
+
+          <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-full border border-gold/25 text-gold">
+            <Icon className="h-4 w-4" strokeWidth={1.25} />
+          </div>
+          <p className="text-[0.68rem] uppercase tracking-[0.34em] text-gold">
+            {sense.label}
+          </p>
+          <h1 className="mt-6 max-w-[44rem] font-display text-[3.25rem] leading-[0.92] text-ink sm:text-[4.7rem] lg:text-[5.35rem]">
+            {article.title}
+          </h1>
+          <div className="mt-8 h-px w-14 bg-gold" />
+          <p className="mt-8 max-w-xl font-display text-2xl leading-9 text-[#2f261e] sm:text-3xl sm:leading-10">
+            {article.description}
+          </p>
+          <p className="mt-8 max-w-lg text-sm leading-7 text-[#665746]">
+            Une note courte dans la galerie Septième Sens, pensée comme une
+            respiration visuelle et sensorielle.
+          </p>
+          <dl className="mt-12 grid gap-5 border-t border-[#d3c2a6]/75 pt-7 text-sm text-[#5f5141] sm:grid-cols-2">
+            <div>
+              <dt className="text-[0.62rem] uppercase tracking-[0.26em] text-gold">
+                Catégorie
+              </dt>
+              <dd className="mt-2">{article.category}</dd>
+            </div>
+            <div>
+              <dt className="text-[0.62rem] uppercase tracking-[0.26em] text-gold">
+                Univers
+              </dt>
+              <dd className="mt-2">{sense.label}</dd>
+            </div>
+          </dl>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 1.02 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
+          className="relative min-h-[62svh] overflow-hidden lg:min-h-screen"
+        >
+          <img
+            src={article.image}
+            alt={article.alt}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/20 via-transparent to-transparent lg:bg-ink/[0.04]" />
+        </motion.div>
+      </section>
+    </>
+  );
+}
+
+function NotFoundPage() {
+  return (
+    <>
+      <FloatingNav />
+      <section className="flex min-h-screen items-center px-6 pt-24 sm:px-10 lg:px-16">
+        <div className="max-w-xl">
+          <p className="text-[0.68rem] uppercase tracking-[0.34em] text-gold">
+            Article introuvable
+          </p>
+          <h1 className="mt-5 font-display text-6xl leading-none text-ink">
+            La page s'est égarée.
+          </h1>
+          <p className="mt-7 text-sm leading-7 text-[#665746]">
+            Ce récit n'existe pas encore ou son adresse a changé.
+          </p>
+          <RouteLink
+            href="/"
+            className="mt-9 inline-flex rounded-full border border-gold/45 px-6 py-3 text-[0.62rem] uppercase tracking-[0.24em] text-[#4b3a25] transition hover:bg-ink hover:text-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45"
+          >
+            Retour à l'accueil
+          </RouteLink>
+        </div>
+      </section>
     </>
   );
 }
@@ -607,14 +770,31 @@ function AppContent() {
     return () => window.removeEventListener("popstate", handleRouteChange);
   }, []);
 
-  const slug = path.replace(/^\/+/, "").replace(/\/+$/, "");
-  const currentSense = senses.find((sense) => sense.slug === slug);
+  const segments = path.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
 
-  if (currentSense) {
+  if (segments.length === 0) {
+    return <HomePage />;
+  }
+
+  const currentSense = senses.find((sense) => sense.slug === segments[0]);
+
+  if (!currentSense) {
+    return <NotFoundPage />;
+  }
+
+  if (segments.length === 1) {
     return <SensePage sense={currentSense} />;
   }
 
-  return <HomePage />;
+  const currentArticle = currentSense.articles.find(
+    (article) => article.slug === segments[1],
+  );
+
+  if (currentArticle) {
+    return <ArticleDetailPage sense={currentSense} article={currentArticle} />;
+  }
+
+  return <NotFoundPage />;
 }
 
 export default function App() {
