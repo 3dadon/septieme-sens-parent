@@ -85,7 +85,7 @@ export const senses: Sense[] = [
     intro: "Explorer les matières, les peaux et les textures calmes.",
     homeText: "La matière calme le regard et réveille la présence.",
     homeImage:
-      "https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=1800&q=90",
+      "https://images.unsplash.com/photo-1683009426952-13567b4fa28b?auto=format&fit=crop&w=1800&q=90",
     icon: Hand,
     articles: makeArticles([
       "Lin froissé",
@@ -106,7 +106,7 @@ export const senses: Sense[] = [
     intro: "Explorer l'intuition, les souvenirs et les liens invisibles.",
     homeText: "L'intuition relie ce que les sens ont commencé.",
     homeImage:
-      "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1800&q=90",
+      "https://plus.unsplash.com/premium_photo-1674331206157-f3e1581d376b?auto=format&fit=crop&w=1800&q=90",
     icon: Brain,
     articles: makeArticles([
       "La mémoire des lieux",
