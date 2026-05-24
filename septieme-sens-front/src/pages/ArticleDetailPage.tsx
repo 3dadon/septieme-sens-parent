@@ -1,17 +1,68 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { FloatingNav } from "../components/FloatingNav";
 import { RouteLink } from "../components/RouteLink";
+import { getPublishedArticle } from "../services/articleService";
 import type { Article, Sense } from "../types/content";
 
 export function ArticleDetailPage({
   sense,
   article,
+  articleSlug,
 }: {
   sense: Sense;
-  article: Article;
+  article?: Article;
+  articleSlug: string;
 }) {
+  const [publishedArticle, setPublishedArticle] = useState<Article | null>(
+    null,
+  );
   const Icon = sense.icon;
+  const displayedArticle = publishedArticle ?? article;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    setPublishedArticle(null);
+
+    getPublishedArticle(sense.slug, articleSlug).then(({ data }) => {
+      if (isMounted) {
+        setPublishedArticle(data);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sense.slug, articleSlug]);
+
+  if (!displayedArticle) {
+    return (
+      <>
+        <FloatingNav activeSlug={sense.slug} />
+        <section className="flex min-h-screen items-center px-6 pt-24 sm:px-10 lg:px-16">
+          <div className="max-w-xl">
+            <p className="text-[0.68rem] uppercase tracking-[0.34em] text-gold">
+              Article introuvable
+            </p>
+            <h1 className="mt-5 font-display text-6xl leading-none text-ink">
+              La page s'est égarée.
+            </h1>
+            <p className="mt-7 text-sm leading-7 text-[#665746]">
+              Ce récit n'existe pas encore ou son adresse a changé.
+            </p>
+            <RouteLink
+              href="/"
+              className="mt-9 inline-flex rounded-full border border-gold/45 px-6 py-3 text-[0.62rem] uppercase tracking-[0.24em] text-[#4b3a25] transition hover:bg-ink hover:text-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45"
+            >
+              Retour à l'accueil
+            </RouteLink>
+          </div>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>
@@ -38,11 +89,11 @@ export function ArticleDetailPage({
             {sense.label}
           </p>
           <h1 className="mt-6 max-w-[44rem] font-display text-[3.25rem] leading-[0.92] text-ink sm:text-[4.7rem] lg:text-[5.35rem]">
-            {article.title}
+            {displayedArticle.title}
           </h1>
           <div className="mt-8 h-px w-14 bg-gold" />
           <p className="mt-8 max-w-xl font-display text-2xl leading-9 text-[#2f261e] sm:text-3xl sm:leading-10">
-            {article.description}
+            {displayedArticle.description}
           </p>
           <p className="mt-8 max-w-lg text-sm leading-7 text-[#665746]">
             Une note courte dans la galerie Septième Sens, pensée comme une
@@ -53,7 +104,7 @@ export function ArticleDetailPage({
               <dt className="text-[0.62rem] uppercase tracking-[0.26em] text-gold">
                 Catégorie
               </dt>
-              <dd className="mt-2">{article.category}</dd>
+              <dd className="mt-2">{displayedArticle.category}</dd>
             </div>
             <div>
               <dt className="text-[0.62rem] uppercase tracking-[0.26em] text-gold">
@@ -71,8 +122,8 @@ export function ArticleDetailPage({
           className="relative min-h-[62svh] overflow-hidden lg:min-h-screen"
         >
           <img
-            src={article.image}
-            alt={article.alt}
+            src={displayedArticle.image}
+            alt={displayedArticle.alt}
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/20 via-transparent to-transparent lg:bg-ink/[0.04]" />
