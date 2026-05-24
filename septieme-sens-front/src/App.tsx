@@ -41,11 +41,13 @@ function AppContent() {
     (article) => article.slug === segments[1],
   );
 
-  if (currentArticle) {
-    return <ArticleDetailPage sense={currentSense} article={currentArticle} />;
-  }
-
-  return <NotFoundPage />;
+  return (
+    <ArticleDetailPage
+      sense={currentSense}
+      article={currentArticle}
+      articleSlug={segments[1]}
+    />
+  );
 }
 
 export default function App() {

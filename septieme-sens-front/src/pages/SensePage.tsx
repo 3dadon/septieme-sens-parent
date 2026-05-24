@@ -1,10 +1,15 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { ArticlesGrid } from "../components/ArticlesGrid";
 import { FloatingNav } from "../components/FloatingNav";
 import { RouteLink } from "../components/RouteLink";
 import { articleFilters } from "../content/staticArticles";
-import type { Sense } from "../types/content";
+import {
+  getPublishedArticlesBySense,
+  type PublishedArticle,
+} from "../services/articleService";
+import type { Article, Sense } from "../types/content";
 
 function SenseHero({ sense }: { sense: Sense }) {
   const Icon = sense.icon;
@@ -71,12 +76,35 @@ function SecondaryNav() {
 }
 
 export function SensePage({ sense }: { sense: Sense }) {
+  const [publishedArticles, setPublishedArticles] = useState<
+    PublishedArticle[]
+  >([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    setPublishedArticles([]);
+
+    getPublishedArticlesBySense(sense.slug).then(({ data }) => {
+      if (isMounted) {
+        setPublishedArticles(data);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sense.slug]);
+
+  const articles: Article[] =
+    publishedArticles.length > 0 ? publishedArticles : sense.articles;
+
   return (
     <>
       <FloatingNav activeSlug={sense.slug} />
       <SenseHero sense={sense} />
       <SecondaryNav />
-      <ArticlesGrid articles={sense.articles} senseSlug={sense.slug} />
+      <ArticlesGrid articles={articles} senseSlug={sense.slug} />
     </>
   );
 }
