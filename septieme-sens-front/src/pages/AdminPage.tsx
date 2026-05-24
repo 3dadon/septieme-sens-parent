@@ -1,0 +1,205 @@
+import { useEffect, useState, type FormEvent } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { motion } from "framer-motion";
+import { LockKeyhole, LogOut } from "lucide-react";
+import { AdminArticleForm } from "../components/admin/AdminArticleForm";
+import { FloatingNav } from "../components/FloatingNav";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
+
+export function AdminPage() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) {
+      setIsLoadingSession(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (isMounted) {
+        setSession(data.session);
+        setIsLoadingSession(false);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setIsLoadingSession(false);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setStatusMessage("");
+
+    if (!supabase) {
+      setError(
+        "Configuration Supabase absente : renseigne VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY puis redémarre Vite.",
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage("Connexion en cours...");
+
+    try {
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+      if (signInError) {
+        setError(signInError.message || "Email ou mot de passe incorrect.");
+        return;
+      }
+
+      if (!data.session) {
+        setError("Connexion refusée : aucune session Supabase retournée.");
+        return;
+      }
+
+      setSession(data.session);
+      setPassword("");
+      setStatusMessage("");
+    } catch (loginError) {
+      setError(
+        loginError instanceof Error
+          ? loginError.message
+          : "Erreur inconnue pendant la connexion admin.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleLogout() {
+    if (!supabase) {
+      return;
+    }
+
+    await supabase.auth.signOut();
+    setEmail("");
+    setPassword("");
+    setError("");
+    setStatusMessage("");
+  }
+
+  if (isLoadingSession) {
+    return (
+      <>
+        <FloatingNav />
+        <section className="flex min-h-screen items-center justify-center px-6 py-28 text-[0.68rem] uppercase tracking-[0.34em] text-gold">
+          Accès privé
+        </section>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <FloatingNav />
+      <section className="flex min-h-screen items-center px-6 py-28 sm:px-10 lg:px-16">
+        <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          className="mx-auto w-full max-w-[34rem] border-y border-[#d8c7a9]/80 py-12"
+        >
+          <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-full border border-gold/25 text-gold">
+            <LockKeyhole className="h-4 w-4" strokeWidth={1.25} />
+          </div>
+          <p className="text-[0.68rem] uppercase tracking-[0.34em] text-gold">
+            Accès privé
+          </p>
+          <h1 className="mt-5 font-display text-[3.8rem] leading-none text-ink sm:text-[5rem]">
+            Administration
+          </h1>
+
+          {session ? (
+            <div className="mt-9">
+              <p className="text-lg leading-8 text-[#5f5141]">
+                Gestion des articles à venir.
+              </p>
+              <AdminArticleForm />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="mt-9 inline-flex h-12 items-center gap-3 rounded-full border border-gold/32 px-6 text-[0.62rem] uppercase tracking-[0.24em] text-[#6d5430] transition duration-500 hover:border-ink/20 hover:bg-ink hover:text-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/35"
+              >
+                <LogOut className="h-3.5 w-3.5" strokeWidth={1.3} />
+                Déconnexion admin
+              </button>
+            </div>
+          ) : (
+            <form className="mt-9 space-y-6" onSubmit={handleLogin}>
+              {!isSupabaseConfigured ? (
+                <p className="text-sm leading-6 text-[#8a3b2f]">
+                  Ajoute VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans ton
+                  fichier .env local.
+                </p>
+              ) : null}
+              <label className="block">
+                <span className="text-[0.62rem] uppercase tracking-[0.26em] text-gold">
+                  Email admin
+                </span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="mt-3 h-14 w-full border border-[#d8c7a9]/85 bg-[#fffaf1]/65 px-4 text-base text-ink outline-none transition focus:border-gold"
+                  autoComplete="email"
+                  required
+                />
+              </label>
+              <label className="block">
+                <span className="text-[0.62rem] uppercase tracking-[0.26em] text-gold">
+                  Mot de passe
+                </span>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="mt-3 h-14 w-full border border-[#d8c7a9]/85 bg-[#fffaf1]/65 px-4 text-base text-ink outline-none transition focus:border-gold"
+                  autoComplete="current-password"
+                  required
+                />
+              </label>
+              {error ? (
+                <p className="text-sm leading-6 text-[#8a3b2f]">{error}</p>
+              ) : null}
+              {statusMessage ? (
+                <p className="text-sm leading-6 text-[#6d5f4c]">
+                  {statusMessage}
+                </p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="inline-flex h-12 items-center rounded-full border border-gold/45 px-6 text-[0.62rem] uppercase tracking-[0.24em] text-[#4b3a25] transition hover:bg-ink hover:text-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45 disabled:cursor-wait disabled:opacity-60"
+              >
+                {isSubmitting ? "Vérification" : "Entrer"}
+              </button>
+            </form>
+          )}
+        </motion.div>
+      </section>
+    </>
+  );
+}
