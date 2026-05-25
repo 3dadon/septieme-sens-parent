@@ -1,6 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { senses } from "../../content/senses";
-import { supabase } from "../../lib/supabase";
+import {
+  createArticle,
+  updateArticle,
+  type PublishedArticle,
+} from "../../services/articleService";
 import type { SupabaseArticleForm } from "../../types/content";
 import { slugify } from "../../utils/slugify";
 
@@ -17,13 +21,41 @@ function createEmptyArticleForm(): SupabaseArticleForm {
   };
 }
 
-export function AdminArticleForm() {
+function articleToForm(article: PublishedArticle): SupabaseArticleForm {
+  return {
+    senseSlug: article.senseSlug,
+    title: article.title,
+    slug: article.slug,
+    category: article.category,
+    description: article.description,
+    content: article.content,
+    imageUrl: article.imageUrl,
+    published: article.published,
+  };
+}
+
+export function AdminArticleForm({
+  selectedArticle,
+  onSaved,
+  onCancelEdit,
+}: {
+  selectedArticle?: PublishedArticle | null;
+  onSaved?: () => void;
+  onCancelEdit?: () => void;
+}) {
   const [form, setForm] = useState<SupabaseArticleForm>(() =>
-    createEmptyArticleForm(),
+    selectedArticle ? articleToForm(selectedArticle) : createEmptyArticleForm(),
   );
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
+  const isEditing = Boolean(selectedArticle);
+
+  useEffect(() => {
+    setForm(selectedArticle ? articleToForm(selectedArticle) : createEmptyArticleForm());
+    setCreateError("");
+    setCreateSuccess("");
+  }, [selectedArticle]);
 
   function updateForm<Field extends keyof SupabaseArticleForm>(
     field: Field,
@@ -38,43 +70,30 @@ export function AdminArticleForm() {
     setCreateSuccess("");
 
     const slug = form.slug.trim() || slugify(form.title);
-    const title = form.title.trim();
-    const senseSlug = form.senseSlug.trim();
-
-    if (!title || !senseSlug || !slug) {
-      setCreateError("Renseigne au minimum un sens, un titre et un slug.");
-      return;
-    }
-
-    if (!supabase) {
-      setCreateError(
-        "Configuration Supabase absente : renseigne VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY puis redémarre Vite.",
-      );
-      return;
-    }
 
     setIsCreating(true);
 
-    const { error } = await supabase.from("articles").insert({
-      sense_slug: senseSlug,
-      title,
-      slug,
-      category: form.category.trim() || null,
-      description: form.description.trim() || null,
-      content: form.content.trim() || null,
-      image_url: form.imageUrl.trim() || null,
-      published: form.published,
-    });
+    const { error } =
+      selectedArticle && isEditing
+        ? await updateArticle(selectedArticle.id, form, slug)
+        : await createArticle(form, slug);
 
     setIsCreating(false);
 
     if (error) {
-      setCreateError(error.message);
+      setCreateError(error);
       return;
     }
 
-    setCreateSuccess("Article créé dans Supabase.");
-    setForm(createEmptyArticleForm());
+    setCreateSuccess(
+      isEditing ? "Article sauvegardé dans Supabase." : "Article créé dans Supabase.",
+    );
+
+    if (!isEditing) {
+      setForm(createEmptyArticleForm());
+    }
+
+    onSaved?.();
   }
 
   return (
@@ -84,7 +103,7 @@ export function AdminArticleForm() {
     >
       <div>
         <p className="text-[0.68rem] uppercase tracking-[0.34em] text-gold">
-          Créer un article
+          {isEditing ? "Modifier l'article" : "Créer un article"}
         </p>
         <p className="mt-3 text-sm leading-7 text-[#665746]">
           Première version simple : création en base, sans upload ni édition
@@ -205,13 +224,29 @@ export function AdminArticleForm() {
         <p className="text-sm leading-6 text-[#4c6546]">{createSuccess}</p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={isCreating}
-        className="inline-flex h-12 items-center rounded-full border border-gold/45 px-6 text-[0.62rem] uppercase tracking-[0.24em] text-[#4b3a25] transition hover:bg-ink hover:text-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45 disabled:cursor-wait disabled:opacity-60"
-      >
-        {isCreating ? "Création" : "Créer l'article"}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="submit"
+          disabled={isCreating}
+          className="inline-flex h-12 items-center rounded-full border border-gold/45 px-6 text-[0.62rem] uppercase tracking-[0.24em] text-[#4b3a25] transition hover:bg-ink hover:text-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45 disabled:cursor-wait disabled:opacity-60"
+        >
+          {isCreating
+            ? "Création"
+            : isEditing
+              ? "Sauvegarder"
+              : "Créer l'article"}
+        </button>
+
+        {isEditing ? (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="inline-flex h-12 items-center rounded-full border border-[#d8c7a9]/85 px-6 text-[0.62rem] uppercase tracking-[0.24em] text-[#6d5430] transition hover:border-ink/20 hover:bg-ink hover:text-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/35"
+          >
+            Annuler
+          </button>
+        ) : null}
+      </div>
     </form>
   );
 }
